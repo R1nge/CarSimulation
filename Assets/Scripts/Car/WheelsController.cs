@@ -1,13 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Car
 {
     public class WheelsController : MonoBehaviour
     {
         [SerializeField] private float accelerationTime;
-        [SerializeField] private float maxSpeed;
+        [SerializeField] private float maxSpeed, maxBackSpeed;
         [SerializeField] private float distanceToGround;
         [SerializeField] private float motorForce;
         [SerializeField] private float maxSteerAngle;
@@ -22,26 +20,23 @@ namespace Car
 
         public void ApplySpeedPowerup(float percent)
         {
-            for (int i = 0; i < backWheelColliders.Length; i++)
+            _speedMultiplier = GetCurrentSpeed() * percent;
+
+            if (_speedMultiplier > 0)
             {
-                var wheel = backWheelColliders[i];
-                //if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
-                _speedMultiplier = GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) * percent;
-                Debug.LogError("MULTIPLIER: " + _speedMultiplier);
-                Debug.LogWarning("Speed: " + GetCurrentSpeed(wheel.radius, wheel.rpm));
-                if (_speedMultiplier > 0)
-                {
-                    AddAcceleration();
-                }
-                else
-                {
-                    AddBreakTorque();
-                }
+                AddAcceleration();
+            }
+            else if (_speedMultiplier < 0)
+            {
+                SetTorque(motorForce * _speedMultiplier);
+                SetBreakTorque(motorForce * _speedMultiplier);
             }
         }
 
         public void DeleteSpeedPowerup()
         {
+            SetTorque(0);
+            SetBreakTorque(0);
             _speedMultiplier = 1;
         }
 
@@ -50,6 +45,7 @@ namespace Car
         private void Update()
         {
             GetInput();
+            Brake();
         }
 
         private void FixedUpdate()
@@ -82,31 +78,69 @@ namespace Car
 
         private void Accelerate()
         {
-            //var acceleration = maxSpeed / accelerationTime;
+            if (_verticalInput > 0)
+            {
+                if (GetCurrentSpeed() <= maxSpeed)
+                {
+                    SetTorque(_verticalInput * motorForce * _speedMultiplier);
+                }
+            }
+            else if (_verticalInput < 0)
+            {
+                if (GetCurrentSpeed() <= maxBackSpeed)
+                {
+                    SetTorque(_verticalInput * motorForce * _speedMultiplier);
+                }
+            }
+        }
+
+        private void SetTorque(float value)
+        {
             for (int i = 0; i < backWheelColliders.Length; i++)
             {
                 var wheel = backWheelColliders[i];
-                if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
-                wheel.motorTorque = _verticalInput * motorForce * _speedMultiplier; // * acceleration;
+                wheel.motorTorque = value;
+            }
+        }
+
+        private void Brake()
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                if (GetCurrentSpeed() != 0)
+                {
+                    SetBreakTorque(motorForce * _speedMultiplier);
+                }
+                else
+                {
+                    SetBreakTorque(0);
+                }
+
+                SetTorque(0);
+            }
+            else if (Input.GetKeyUp(KeyCode.Space))
+            {
+                SetBreakTorque(0);
             }
         }
 
         private void AddAcceleration()
         {
-            for (int i = 0; i < backWheelColliders.Length; i++)
-            {
-                var wheel = backWheelColliders[i];
-                if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
-                wheel.motorTorque = motorForce * _speedMultiplier; // * acceleration;
-            }
+            if (GetCurrentSpeed() >= maxSpeed) return;
+            SetTorque(motorForce * _speedMultiplier);
         }
 
-        private void AddBreakTorque()
+        private void SetBreakTorque(float value)
         {
+            if (value < 0)
+            {
+                value *= -1;
+            }
+
             for (int i = 0; i < backWheelColliders.Length; i++)
             {
                 var wheel = backWheelColliders[i];
-                wheel.brakeTorque = motorForce * -_speedMultiplier;
+                wheel.brakeTorque = value;
             }
         }
 
@@ -151,12 +185,7 @@ namespace Car
         /// <summary>
         /// Return current speed in km/h
         /// </summary>
-        private float GetCurrentSpeed(float wheelRadius, float wheelRpm)
-        {
-            // var circumFerence = 2.0f * 3.14f * wheelRadius;
-            // return circumFerence * wheelRpm * 60 / 1000;
-            return _rigidbody.velocity.magnitude * 3.6f;
-        }
+        private float GetCurrentSpeed() => _rigidbody.velocity.magnitude * 3.6f;
 
         private bool IsGrounded()
         {

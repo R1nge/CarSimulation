@@ -1842,13 +1842,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_SidewaysFriction:
     m_ExtremumSlip: 1
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_Enabled: 1
 --- !u!1 &268031320
 GameObject:
@@ -11349,13 +11349,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_SidewaysFriction:
     m_ExtremumSlip: 1
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_Enabled: 1
 --- !u!1 &1362650866
 GameObject:
@@ -12299,13 +12299,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_SidewaysFriction:
     m_ExtremumSlip: 1
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_Enabled: 1
 --- !u!1 &1519584449
 GameObject:
@@ -16241,13 +16241,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_SidewaysFriction:
     m_ExtremumSlip: 1
     m_ExtremumValue: 1
     m_AsymptoteSlip: 2
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1
+    m_Stiffness: 1.5
   m_Enabled: 1
 --- !u!1 &2052927542
 GameObject:
@@ -18557,6 +18557,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   accelerationTime: 3
   maxSpeed: 50
+  maxBackSpeed: 20
   distanceToGround: 0.17
   motorForce: 1875
   maxSteerAngle: 80
