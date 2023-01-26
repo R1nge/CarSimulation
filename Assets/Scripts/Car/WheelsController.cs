@@ -25,10 +25,18 @@ namespace Car
             for (int i = 0; i < backWheelColliders.Length; i++)
             {
                 var wheel = backWheelColliders[i];
-                if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
+                //if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
                 _speedMultiplier = GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) * percent;
+                Debug.LogError("MULTIPLIER: " + _speedMultiplier);
                 Debug.LogWarning("Speed: " + GetCurrentSpeed(wheel.radius, wheel.rpm));
-                AddAcceleration();
+                if (_speedMultiplier > 0)
+                {
+                    AddAcceleration();
+                }
+                else
+                {
+                    AddBreakTorque();
+                }
             }
         }
 
@@ -79,8 +87,7 @@ namespace Car
             {
                 var wheel = backWheelColliders[i];
                 if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
-                backWheelColliders[i].motorTorque =
-                    _verticalInput * motorForce * _speedMultiplier; // * acceleration;
+                wheel.motorTorque = _verticalInput * motorForce * _speedMultiplier; // * acceleration;
             }
         }
 
@@ -90,7 +97,16 @@ namespace Car
             {
                 var wheel = backWheelColliders[i];
                 if (GetCurrentSpeed(wheelRadius: wheel.radius, wheelRpm: wheel.rpm) >= maxSpeed) return;
-                backWheelColliders[i].motorTorque = motorForce * _speedMultiplier; // * acceleration;
+                wheel.motorTorque = motorForce * _speedMultiplier; // * acceleration;
+            }
+        }
+
+        private void AddBreakTorque()
+        {
+            for (int i = 0; i < backWheelColliders.Length; i++)
+            {
+                var wheel = backWheelColliders[i];
+                wheel.brakeTorque = motorForce * -_speedMultiplier;
             }
         }
 

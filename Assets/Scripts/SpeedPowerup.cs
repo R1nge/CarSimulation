@@ -12,8 +12,8 @@ public class SpeedPowerup : MonoBehaviour
             Vector3 toTarget = (car.transform.forward - transform.forward).normalized;
             if (Vector3.Dot(toTarget, transform.forward) < -.5f)
             {
-                Debug.LogWarning("DEboost: " + -(speedPercent - 1));
-                car.ApplySpeedPowerup(-(speedPercent - 1));
+                Debug.LogWarning("DEboost: " + -speedPercent);
+                car.ApplySpeedPowerup(-speedPercent);
             }
             else
             {
