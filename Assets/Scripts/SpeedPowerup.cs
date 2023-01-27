@@ -27,7 +27,7 @@ public class SpeedPowerup : MonoBehaviour
     {
         if (other.transform.root.TryGetComponent(out WheelsController wheelsController))
         {
-            wheelsController.DeleteSpeedPowerup();
+            wheelsController.ResetSpeedPowerup();
         }
     }
 }

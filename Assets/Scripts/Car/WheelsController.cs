@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Car
 {
@@ -33,10 +34,8 @@ namespace Car
             }
         }
 
-        public void DeleteSpeedPowerup()
+        public void ResetSpeedPowerup()
         {
-            SetTorque(0);
-
             _speedMultiplier = 1;
         }
 
@@ -59,19 +58,17 @@ namespace Car
             Accelerate();
             UpdateWheelPoses();
             IncreaseTime();
-            //DownForce();
-            //print(GetCurrentSpeedKmh());
+            DownForce();
         }
 
         private float CalculateAcceleration(float max)
         {
             var current = GetCurrentSpeedMs();
             var accelerationRate = (max - current) / accelerationTime;
-            print(accelerationRate);
             return accelerationRate * _rigidbody.mass;
         }
 
-        private float CalculateBreakTorque()
+        private float CalculateBrakeTorque()
         {
             var momentum = _rigidbody.mass * maxSpeed * 3600 * 1000; //GetCurrentSpeedMs();
             var torque = momentum / timeToStop;
@@ -132,18 +129,18 @@ namespace Car
             {
                 if (GetCurrentSpeedKmh() >= 0.1f)
                 {
-                    SetDumpingRate(CalculateBreakTorque());
+                    SetBrakeTorque(CalculateBrakeTorque());
                 }
                 else
                 {
-                    SetDumpingRate(3f);
+                    SetBrakeTorque(0);
                 }
 
                 SetTorque(0);
             }
             else if (Input.GetKeyUp(KeyCode.Space))
             {
-                SetDumpingRate(3f);
+                SetBrakeTorque(0);
             }
         }
 
@@ -154,10 +151,24 @@ namespace Car
                 backWheelColliders[i].wheelDampingRate = value;
             }
         }
+        
+        private void SetBrakeTorque(float value)
+        {
+            if (value < 0)
+            {
+                value *= -1;
+            }
+
+            for (int i = 0; i < backWheelColliders.Length; i++)
+            {
+                var wheel = backWheelColliders[i];
+                wheel.brakeTorque = value;
+            }
+        }
 
         private void IncreaseTime()
         {
-            if (_rigidbody.velocity != Vector3.zero)
+            if (_rigidbody.velocity.x > .2f)
             {
                 _currentTime += Time.fixedDeltaTime;
             }
