@@ -4,10 +4,10 @@ namespace Car
 {
     public class WheelsController : MonoBehaviour
     {
-        [SerializeField] private float accelerationTime;
+        [SerializeField] private Transform centerOfMass;
+        [SerializeField] private float accelerationTime, timeToStop;
         [SerializeField] private float maxSpeed, maxBackSpeed;
         [SerializeField] private float distanceToGround;
-        [SerializeField] private float motorForce;
         [SerializeField] private float maxSteerAngle;
         [SerializeField] private Transform[] frontWheels, backWheels;
         [SerializeField] private WheelCollider[] frontWheelsColliders, backWheelColliders;
@@ -20,32 +20,37 @@ namespace Car
 
         public void ApplySpeedPowerup(float percent)
         {
-            _speedMultiplier = GetCurrentSpeed() * percent;
+            _speedMultiplier = GetCurrentSpeedKmh() * percent;
 
             if (_speedMultiplier > 0)
             {
-                AddAcceleration();
+                if (GetCurrentSpeedKmh() >= maxSpeed) return;
+                SetTorque(CalculateAcceleration(maxSpeed) * _speedMultiplier);
             }
             else if (_speedMultiplier < 0)
             {
-                SetTorque(motorForce * _speedMultiplier);
-                SetBreakTorque(motorForce * _speedMultiplier);
+                SetTorque(CalculateAcceleration(maxSpeed) * _speedMultiplier);
             }
         }
 
         public void DeleteSpeedPowerup()
         {
             SetTorque(0);
-            SetBreakTorque(0);
+
             _speedMultiplier = 1;
         }
 
-        private void Awake() => _rigidbody = GetComponent<Rigidbody>();
+        private void Awake()
+        {
+            _rigidbody = GetComponent<Rigidbody>();
+            _rigidbody.centerOfMass = centerOfMass.localPosition;
+        }
 
         private void Update()
         {
             GetInput();
             Brake();
+            Debug.LogWarning(GetCurrentSpeedKmh());
         }
 
         private void FixedUpdate()
@@ -54,8 +59,26 @@ namespace Car
             Accelerate();
             UpdateWheelPoses();
             IncreaseTime();
-            DownForce();
+            //DownForce();
+            //print(GetCurrentSpeedKmh());
         }
+
+        private float CalculateAcceleration(float max)
+        {
+            var current = GetCurrentSpeedMs();
+            var accelerationRate = (max - current) / accelerationTime;
+            print(accelerationRate);
+            return accelerationRate * _rigidbody.mass;
+        }
+
+        private float CalculateBreakTorque()
+        {
+            var momentum = _rigidbody.mass * maxSpeed * 3600 * 1000; //GetCurrentSpeedMs();
+            var torque = momentum / timeToStop;
+            var force = torque * backWheelColliders[0].forwardFriction.stiffness * 2;
+            return force * 2;
+        }
+
         //TODO: add force to counter side 
         //https://youtu.be/ueEmiDM94IE?t=1225
         //TODO: add acceleration
@@ -80,16 +103,16 @@ namespace Car
         {
             if (_verticalInput > 0)
             {
-                if (GetCurrentSpeed() <= maxSpeed)
+                if (GetCurrentSpeedKmh() <= maxSpeed)
                 {
-                    SetTorque(_verticalInput * motorForce * _speedMultiplier);
+                    SetTorque(_verticalInput * CalculateAcceleration(maxSpeed) * _speedMultiplier);
                 }
             }
             else if (_verticalInput < 0)
             {
-                if (GetCurrentSpeed() <= maxBackSpeed)
+                if (GetCurrentSpeedKmh() <= maxBackSpeed)
                 {
-                    SetTorque(_verticalInput * motorForce * _speedMultiplier);
+                    SetTorque(_verticalInput * CalculateAcceleration(maxBackSpeed) * _speedMultiplier);
                 }
             }
         }
@@ -105,42 +128,30 @@ namespace Car
 
         private void Brake()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKey(KeyCode.Space))
             {
-                if (GetCurrentSpeed() != 0)
+                if (GetCurrentSpeedKmh() >= 0.1f)
                 {
-                    SetBreakTorque(motorForce * _speedMultiplier);
+                    SetDumpingRate(CalculateBreakTorque());
                 }
                 else
                 {
-                    SetBreakTorque(0);
+                    SetDumpingRate(3f);
                 }
 
                 SetTorque(0);
             }
             else if (Input.GetKeyUp(KeyCode.Space))
             {
-                SetBreakTorque(0);
+                SetDumpingRate(3f);
             }
         }
 
-        private void AddAcceleration()
+        private void SetDumpingRate(float value)
         {
-            if (GetCurrentSpeed() >= maxSpeed) return;
-            SetTorque(motorForce * _speedMultiplier);
-        }
-
-        private void SetBreakTorque(float value)
-        {
-            if (value < 0)
-            {
-                value *= -1;
-            }
-
             for (int i = 0; i < backWheelColliders.Length; i++)
             {
-                var wheel = backWheelColliders[i];
-                wheel.brakeTorque = value;
+                backWheelColliders[i].wheelDampingRate = value;
             }
         }
 
@@ -182,10 +193,9 @@ namespace Car
             _rigidbody.AddForce(Vector3.down * 25f);
         }
 
-        /// <summary>
-        /// Return current speed in km/h
-        /// </summary>
-        private float GetCurrentSpeed() => _rigidbody.velocity.magnitude * 3.6f;
+        private float GetCurrentSpeedKmh() => _rigidbody.velocity.magnitude * 3.6f;
+
+        private float GetCurrentSpeedMs() => _rigidbody.velocity.magnitude;
 
         private bool IsGrounded()
         {
