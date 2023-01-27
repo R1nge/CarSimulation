@@ -79,6 +79,7 @@ namespace Car
         //TODO: add force to counter side 
         //https://youtu.be/ueEmiDM94IE?t=1225
         //TODO: add acceleration
+        //TODO: swap wheel colliders with sphere colliders and use rigidbody forces on them
 
         private void GetInput()
         {
@@ -102,6 +103,7 @@ namespace Car
             {
                 if (GetCurrentSpeedKmh() <= maxSpeed)
                 {
+                    //_rigidbody.AddForce(Vector3.forward * (_verticalInput * CalculateAcceleration(maxSpeed) * _speedMultiplier));
                     SetTorque(_verticalInput * CalculateAcceleration(maxSpeed) * _speedMultiplier);
                 }
             }
@@ -109,6 +111,7 @@ namespace Car
             {
                 if (GetCurrentSpeedKmh() <= maxBackSpeed)
                 {
+                    //_rigidbody.AddTorque(-Vector3.forward * (_verticalInput * CalculateAcceleration(maxSpeed) * _speedMultiplier));
                     SetTorque(_verticalInput * CalculateAcceleration(maxBackSpeed) * _speedMultiplier);
                 }
             }
